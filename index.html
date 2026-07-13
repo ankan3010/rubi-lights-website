@@ -537,7 +537,7 @@ async function loadBookings(){
 
         const querySnapshot = await getDocs(collection(db,"bookings"));
 
-        querySnapshot.forEach((doc)=>{
+        querySnapshot.forEach((docSnap)=>{
 
             let b = doc.data();
 
@@ -551,6 +551,9 @@ async function loadBookings(){
                 <p>Date: ${b.date}</p>
 
                 <p>Message: ${b.msg}</p>
+<button onclick="deleteBooking('${doc.id}')">
+Delete
+</button>
 
             </div>
             `;
@@ -564,40 +567,26 @@ async function loadBookings(){
     }
 
 }
-function deleteBooking(index){
+async function deleteBooking(id){
 
-    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    if(confirm("Delete this booking?")){
 
-    bookings.splice(index,1);
+        await deleteDoc(doc(db,"bookings",id));
 
-    localStorage.setItem("bookings",JSON.stringify(bookings));
-
-    loadBookings();
-
-}
-// ---------- CHECK LOGIN ----------
-
-window.onload = function () {
-
-    if (localStorage.getItem("loggedIn") === "true") {
-
-        document.getElementById("adminPanel").style.display = "block";
+        loadBookings();
 
     }
 
-    loadContact();
+}
 
-    loadCatalog();
 
-    loadGallery();
+// ---------- CHECK LOGIN ----------
 
-    loadBookings();
 
-};
 
 // ---------- CONTACT DETAILS ----------
 
-function saveContact() {
+async function saveContact(){
 
     const contact = {
 
@@ -611,263 +600,336 @@ function saveContact() {
 
     };
 
-    localStorage.setItem("contact", JSON.stringify(contact));
 
-    loadContact();
+    try{
 
-    alert("Contact Details Saved");
+        await setDoc(doc(db,"website","contact"),contact);
 
-}
+        alert("Contact Saved");
 
-function loadContact() {
+        loadContact();
 
-    let contact = JSON.parse(localStorage.getItem("contact"));
+    }
+    catch(error){
 
-    if (!contact) return;
+        console.error(error);
 
-    document.getElementById("phoneText").innerHTML = contact.phone;
+        alert("Failed to save contact");
 
-    document.getElementById("whatsappText").innerHTML = contact.whatsapp;
-
-    document.getElementById("emailText").innerHTML = contact.email;
-
-    document.getElementById("addressText").innerHTML = contact.address;
-
-    document.getElementById("phone").value = contact.phone;
-
-    document.getElementById("whatsapp").value = contact.whatsapp;
-
-    document.getElementById("email").value = contact.email;
-
-    document.getElementById("address").value = contact.address;
+    }
 
 }
+async function loadContact(){
 
+    try{
+
+        const contactSnap = await getDoc(doc(db,"website","contact"));
+
+
+        if(contactSnap.exists()){
+
+
+            let contact = contactSnap.data();
+
+
+            document.getElementById("phoneText").innerHTML = contact.phone;
+
+            document.getElementById("whatsappText").innerHTML = contact.whatsapp;
+
+            document.getElementById("emailText").innerHTML = contact.email;
+
+            document.getElementById("addressText").innerHTML = contact.address;
+
+
+
+            // Fill admin fields
+
+            document.getElementById("phone").value = contact.phone;
+
+            document.getElementById("whatsapp").value = contact.whatsapp;
+
+            document.getElementById("email").value = contact.email;
+
+            document.getElementById("address").value = contact.address;
+
+
+        }
+
+
+    }
+    catch(error){
+
+        console.error("Contact loading error:",error);
+
+    }
+
+}
 // ---------- PLACEHOLDER ----------
 
 // ---------- CATALOG MANAGEMENT ----------
 
-let catalogs = JSON.parse(localStorage.getItem("catalogs")) || [];
 
-let editIndex = -1;
-
-function saveCatalog(){
+async function saveCatalog(){
 
     let name = document.getElementById("catalogName").value.trim();
     let price = document.getElementById("catalogPrice").value.trim();
     let image = document.getElementById("catalogImage").value.trim();
+
 
     if(name=="" || price==""){
         alert("Please enter Catalog Name and Price");
         return;
     }
 
-    let item={
+
+    await addDoc(collection(db,"catalogs"),{
+
         name:name,
         price:price,
         image:image
-    };
 
-    if(editIndex==-1){
-        catalogs.push(item);
-    }else{
-        catalogs[editIndex]=item;
-        editIndex=-1;
-    }
+    });
 
-    localStorage.setItem("catalogs",JSON.stringify(catalogs));
 
     document.getElementById("catalogName").value="";
     document.getElementById("catalogPrice").value="";
     document.getElementById("catalogImage").value="";
 
+
+    alert("Catalog Added");
+
     loadCatalog();
+
+}
+
+
+
+async function loadCatalog(){
+
+    let customer = document.getElementById("catalogContainer");
+    let admin = document.getElementById("adminCatalogList");
+
+
+    customer.innerHTML="";
+    admin.innerHTML="";
+
+
+    try{
+
+        const querySnapshot = await getDocs(collection(db,"catalogs"));
+
+
+        querySnapshot.forEach((docSnap)=>{
+
+
+            let item = docSnap.data();
+
+
+            customer.innerHTML += `
+
+            <div class="card">
+
+            ${item.image ? `<img src="${item.image}">`:""}
+
+            <h3>${item.name}</h3>
+
+            <p>₹ ${item.price}</p>
+
+            </div>
+
+            `;
+
+
+
+            admin.innerHTML += `
+
+            <div class="card">
+
+            ${item.image ? `<img src="${item.image}">`:""}
+
+            <h3>${item.name}</h3>
+
+            <p>₹ ${item.price}</p>
+
+
+            <button onclick="deleteCatalog('${docSnap.id}')">
+
+            Delete
+
+            </button>
+
+
+            </div>
+
+            `;
+
+
+        });
+
+
+    }
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+
+
+async function deleteCatalog(id){
+
+
+    if(confirm("Delete this catalog?")){
+
+
+        await deleteDoc(doc(db,"catalogs",id));
+
+
+        loadCatalog();
+
+    }
 
 }
 // =============================
 // GALLERY MANAGEMENT
 // =============================
 
-let gallery = JSON.parse(localStorage.getItem("gallery")) || [];
-
-function addGalleryImage(){
+async function addGalleryImage(){
 
     let image = document.getElementById("galleryImage").value.trim();
 
+
     if(image==""){
+
         alert("Please enter Image URL");
         return;
-    }
-
-    gallery.push(image);
-
-    localStorage.setItem("gallery", JSON.stringify(gallery));
-
-    document.getElementById("galleryImage").value="";
-
-    loadGallery();
-
-}
-
-function loadGallery(){
-
-    gallery = JSON.parse(localStorage.getItem("gallery")) || [];
-
-    let customer = document.getElementById("galleryContainer");
-    let admin = document.getElementById("adminGalleryList");
-
-    customer.innerHTML="";
-    admin.innerHTML="";
-
-    gallery.forEach((img,index)=>{
-
-        customer.innerHTML += `
-        <div class="card">
-            <img src="${img}" alt="Gallery Image">
-        </div>
-        `;
-
-        admin.innerHTML += `
-        <div class="card">
-            <img src="${img}" alt="Gallery Image">
-
-            <button onclick="deleteGallery(${index})">
-            Delete
-            </button>
-
-        </div>
-        `;
-
-    });
-
-}
-
-function deleteGallery(index){
-
-    if(confirm("Delete this image?")){
-
-        gallery.splice(index,1);
-
-        localStorage.setItem("gallery",JSON.stringify(gallery));
-
-        loadGallery();
 
     }
 
-}
-
-// =============================
-// BOOKING
-// =============================
-
-async function sendBooking(){
-
-    let name = document.getElementById("customerName").value;
-    let phone = document.getElementById("customerPhone").value;
-    let date = document.getElementById("eventDate").value;
-    let msg = document.getElementById("message").value;
-
-    if(name=="" || phone==""){
-        alert("Please enter Name and Phone Number");
-        return;
-    }
 
     try{
 
-        await addDoc(collection(db,"bookings"),{
-            name: name,
-            phone: phone,
-            date: date,
-            msg: msg
+        await addDoc(collection(db,"gallery"),{
+
+            image:image
+
         });
 
-        alert("Booking Sent Successfully!");
 
-        document.getElementById("customerName").value="";
-        document.getElementById("customerPhone").value="";
-        document.getElementById("eventDate").value="";
-        document.getElementById("message").value="";
+        document.getElementById("galleryImage").value="";
 
-        loadBookings();
 
-    }catch(error){
+        alert("Gallery Image Added");
+
+
+        loadGallery();
+
+
+    }
+    catch(error){
 
         console.error(error);
 
-        alert("Failed to send booking.");
+        alert("Failed to add image");
 
     }
 
 }
 
-function loadCatalog(){
 
-    catalogs=JSON.parse(localStorage.getItem("catalogs")) || [];
 
-    let customer=document.getElementById("catalogContainer");
-    let admin=document.getElementById("adminCatalogList");
+
+
+async function loadGallery(){
+
+    let customer = document.getElementById("galleryContainer");
+
+    let admin = document.getElementById("adminGalleryList");
+
 
     customer.innerHTML="";
+
     admin.innerHTML="";
 
-    catalogs.forEach((item,index)=>{
 
-        let customerCard=`
-        <div class="card">
-            ${item.image?`<img src="${item.image}" alt="${item.name}">`:""}
-            <h3>${item.name}</h3>
-            <p>₹ ${item.price}</p>
-        </div>
-        `;
+    try{
 
-        customer.innerHTML+=customerCard;
 
-        let adminCard=`
-        <div class="card">
-            <h3>${item.name}</h3>
-            <p>₹ ${item.price}</p>
+        const querySnapshot = await getDocs(collection(db,"gallery"));
 
-            <button onclick="editCatalog(${index})">
-            Edit
-            </button>
 
-            <button onclick="deleteCatalog(${index})">
-            Delete
-            </button>
-        </div>
-        `;
 
-        admin.innerHTML+=adminCard;
+        querySnapshot.forEach((docSnap)=>{
 
-    });
 
-}
+            let item = docSnap.data();
 
-function editCatalog(index){
 
-    let item=catalogs[index];
 
-    document.getElementById("catalogName").value=item.name;
-    document.getElementById("catalogPrice").value=item.price;
-    document.getElementById("catalogImage").value=item.image;
+            customer.innerHTML += `
 
-    editIndex=index;
+            <div class="card">
 
-    window.scrollTo(0,0);
+                <img src="${item.image}" alt="Gallery Image">
 
-}
+            </div>
 
-function deleteCatalog(index){
+            `;
 
-    if(confirm("Delete this catalog?")){
 
-        catalogs.splice(index,1);
 
-        localStorage.setItem("catalogs",JSON.stringify(catalogs));
+            admin.innerHTML += `
 
-        loadCatalog();
+            <div class="card">
+
+                <img src="${item.image}" alt="Gallery Image">
+
+
+                <button onclick="deleteGallery('${docSnap.id}')">
+
+                Delete
+
+                </button>
+
+
+            </div>
+
+            `;
+
+
+        });
+
+
 
     }
+    catch(error){
+
+        console.error("Gallery loading error:",error);
+
+    }
+
+
+}
+
+
+
+
+async function deleteGallery(id){
+
+
+    if(confirm("Delete this image?")){
+
+
+        await deleteDoc(doc(db,"gallery",id));
+
+
+        loadGallery();
+
+
+    }
+
 
 }
 
@@ -910,10 +972,28 @@ import {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
+window.onload = function () {
+
+    if(localStorage.getItem("loggedIn") === "true"){
+
+        document.getElementById("adminPanel").style.display="block";
+
+    }
+
+    loadContact();
+    loadCatalog();
+    loadGallery();
+    loadBookings();
+
+};
 window.db = db;
 window.addDoc = addDoc;
 window.getDocs = getDocs;
 window.collection = collection;
+window.setDoc = setDoc;
+window.getDoc = getDoc;
+window.doc = doc;
+window.deleteDoc = deleteDoc;
 // Initialize Firestore
 	
 </script>
