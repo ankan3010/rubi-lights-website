@@ -523,6 +523,61 @@ function logout() {
 
     alert("Logged Out");
 
+}
+
+
+// =============================
+// SEND BOOKING
+// =============================
+
+async function sendBooking(){
+
+    let name = document.getElementById("customerName").value.trim();
+    let phone = document.getElementById("customerPhone").value.trim();
+    let date = document.getElementById("eventDate").value.trim();
+    let msg = document.getElementById("message").value.trim();
+
+
+    if(name=="" || phone=="" || date==""){
+
+        alert("Please fill Name, Phone and Date");
+        return;
+
+    }
+
+
+    try{
+
+        await addDoc(collection(db,"bookings"),{
+
+            name:name,
+            phone:phone,
+            date:date,
+            msg:msg
+
+        });
+
+
+        alert("Booking Sent Successfully");
+
+
+        document.getElementById("customerName").value="";
+        document.getElementById("customerPhone").value="";
+        document.getElementById("eventDate").value="";
+        document.getElementById("message").value="";
+
+
+    }
+    catch(error){
+
+        console.error("Booking Error:",error);
+
+        alert("Booking Failed");
+
+    }
+
+}
+
 }// =============================
 // LOAD BOOKINGS FOR ADMIN
 // =============================
@@ -539,7 +594,7 @@ async function loadBookings(){
 
         querySnapshot.forEach((docSnap)=>{
 
-            let b = doc.data();
+            let b = docSnap.data();
 
             list.innerHTML += `
             <div class="card">
@@ -551,7 +606,7 @@ async function loadBookings(){
                 <p>Date: ${b.date}</p>
 
                 <p>Message: ${b.msg}</p>
-<button onclick="deleteBooking('${doc.id}')">
+<button onclick="deleteBooking('${docSnap.id}')">
 Delete
 </button>
 
