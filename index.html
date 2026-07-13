@@ -777,7 +777,7 @@ function sendBooking(){
         msg
     });
 
-    localStorage.setItem("bookings",JSON.stringify(bookings));
+    JSON.parse(localStorage.getItem("bookings"));
 
 loadBookings();
 
@@ -848,6 +848,7 @@ function editCatalog(index){
 
 }
 
+...
 function deleteCatalog(index){
 
     if(confirm("Delete this catalog?")){
@@ -863,6 +864,59 @@ function deleteCatalog(index){
 }
 
 </script>
+
+<!-- Paste your Firebase CDN code here -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyKH6tRL5odb3At2eVA-3S4bwE6eBTzu8",
+    authDomain: "rubi-lights-and-decoration.firebaseapp.com",
+    projectId: "rubi-lights-and-decoration",
+    storageBucket: "rubi-lights-and-decoration.firebasestorage.app",
+    messagingSenderId: "594495135022",
+    appId: "1:594495135022:web:dfeb154ad7874edf14aebf",
+    measurementId: "G-22MYED32ZF"
+  };
+
+ // Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+// Initialize Firestore
+	
+</script>
+
+
 
 </body>
 </html>
