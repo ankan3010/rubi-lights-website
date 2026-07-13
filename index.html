@@ -527,39 +527,43 @@ function logout() {
 // LOAD BOOKINGS FOR ADMIN
 // =============================
 
-function loadBookings(){
-
-    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+async function loadBookings(){
 
     let list = document.getElementById("bookingList");
 
     list.innerHTML = "";
 
-    bookings.forEach((b,index)=>{
+    try{
 
-        list.innerHTML += `
-        <div class="card">
+        const querySnapshot = await getDocs(collection(db,"bookings"));
 
-            <h3>${b.name}</h3>
+        querySnapshot.forEach((doc)=>{
 
-            <p>Phone: ${b.phone}</p>
+            let b = doc.data();
 
-            <p>Date: ${b.date}</p>
+            list.innerHTML += `
+            <div class="card">
 
-            <p>Message: ${b.msg}</p>
+                <h3>${b.name}</h3>
 
-            <button onclick="deleteBooking(${index})">
-            Delete
-            </button>
+                <p>Phone: ${b.phone}</p>
 
-        </div>
-        `;
+                <p>Date: ${b.date}</p>
 
-    });
+                <p>Message: ${b.msg}</p>
+
+            </div>
+            `;
+
+        });
+
+    }catch(error){
+
+        console.error(error);
+
+    }
 
 }
-
-
 function deleteBooking(index){
 
     let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
@@ -756,40 +760,45 @@ function deleteGallery(index){
 // BOOKING
 // =============================
 
-function sendBooking(){
+async function sendBooking(){
 
-    let name=document.getElementById("customerName").value;
-    let phone=document.getElementById("customerPhone").value;
-    let date=document.getElementById("eventDate").value;
-    let msg=document.getElementById("message").value;
+    let name = document.getElementById("customerName").value;
+    let phone = document.getElementById("customerPhone").value;
+    let date = document.getElementById("eventDate").value;
+    let msg = document.getElementById("message").value;
 
     if(name=="" || phone==""){
         alert("Please enter Name and Phone Number");
         return;
     }
 
-    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    try{
 
-    bookings.push({
-        name,
-        phone,
-        date,
-        msg
-    });
+        await addDoc(collection(db,"bookings"),{
+            name: name,
+            phone: phone,
+            date: date,
+            msg: msg
+        });
 
-    JSON.parse(localStorage.getItem("bookings"));
+        alert("Booking Sent Successfully!");
 
-loadBookings();
+        document.getElementById("customerName").value="";
+        document.getElementById("customerPhone").value="";
+        document.getElementById("eventDate").value="";
+        document.getElementById("message").value="";
 
-alert("Booking Sent Successfully!");
+        loadBookings();
 
-    document.getElementById("customerName").value="";
-    document.getElementById("customerPhone").value="";
-    document.getElementById("eventDate").value="";
-    document.getElementById("message").value="";
+    }catch(error){
+
+        console.error(error);
+
+        alert("Failed to send booking.");
+
+    }
 
 }
-
 
 function loadCatalog(){
 
@@ -848,7 +857,6 @@ function editCatalog(index){
 
 }
 
-...
 function deleteCatalog(index){
 
     if(confirm("Delete this catalog?")){
@@ -871,16 +879,7 @@ function deleteCatalog(index){
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
 
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  setDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
 import {
   getFirestore,
   collection,
@@ -911,7 +910,10 @@ import {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
-
+window.db = db;
+window.addDoc = addDoc;
+window.getDocs = getDocs;
+window.collection = collection;
 // Initialize Firestore
 	
 </script>
